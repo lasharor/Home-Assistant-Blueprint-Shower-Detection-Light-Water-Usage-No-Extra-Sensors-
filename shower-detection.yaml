@@ -1,8 +1,6 @@
 blueprint:
-  name: Detect Shower Using Light and Water Usage (No Extra Sensors)
-  description: >
-    Detect when a shower is in progress based on bathroom light + water usage delta.
-    No template or statistics sensors required.
+  name: DEBUG - Shower Detection (Always Triggers)
+  description: Debug version that always triggers to test the automation
   domain: automation
   input:
     bathroom_switch:
@@ -16,26 +14,6 @@ blueprint:
         entity:
           domain: sensor
           device_class: water
-    water_delta:
-      name: Water Usage Delta
-      description: Minimum increase in water usage (e.g. 0.1 for 100 liters)
-      default: 0.1
-      selector:
-        number:
-          min: 0.01
-          max: 5.0
-          step: 0.01
-          unit_of_measurement: "m³ or 100 L"
-    wait_time:
-      name: Wait Time After Light Turns On
-      description: Wait before checking water delta (to allow usage to accumulate)
-      default: 60
-      selector:
-        number:
-          min: 10
-          max: 300
-          step: 10
-          unit_of_measurement: seconds
     shower_switch:
       name: Switch to Turn On When Shower Detected
       selector:
@@ -49,17 +27,20 @@ trigger:
     entity_id: !input bathroom_switch
     to: "on"
 
-variables:
-  initial_usage: "{{ states(input_water_sensor) | float(0) }}"
-
 action:
-  - delay:
-      seconds: !input wait_time
-  - variables:
-      current_usage: "{{ states(input_water_sensor) | float(0) }}"
-      usage_diff: "{{ current_usage - initial_usage }}"
-  - condition: template
-    value_template: "{{ usage_diff > (input_water_delta | float(0)) }}"
+  # Log initial water usage
+  - service: system_log.write
+    data:
+      message: "DEBUG: Light turned on. Initial water usage: {{ states(input_water_sensor) }}"
+      level: warning
+  
+  # Always turn on the shower switch for testing
   - service: switch.turn_on
     target:
       entity_id: !input shower_switch
+      
+  # Log that we completed
+  - service: system_log.write
+    data:
+      message: "DEBUG: Shower switch turned on successfully"
+      level: warning
