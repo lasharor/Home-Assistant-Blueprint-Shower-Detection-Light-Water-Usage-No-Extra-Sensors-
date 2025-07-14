@@ -50,19 +50,16 @@ trigger:
     to: "on"
 
 variables:
-  initial_usage: "{{ states[inputs.water_sensor] | float }}"
+  initial_usage: "{{ states(input_water_sensor) | float(0) }}"
 
 action:
   - delay:
       seconds: !input wait_time
-
   - variables:
-      current_usage: "{{ states[inputs.water_sensor] | float }}"
+      current_usage: "{{ states(input_water_sensor) | float(0) }}"
       usage_diff: "{{ current_usage - initial_usage }}"
-
   - condition: template
-    value_template: "{{ usage_diff > inputs.water_delta | float }}"
-
+    value_template: "{{ usage_diff > (input_water_delta | float(0)) }}"
   - service: switch.turn_on
     target:
       entity_id: !input shower_switch
